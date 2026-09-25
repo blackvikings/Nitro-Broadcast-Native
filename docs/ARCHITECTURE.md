@@ -1,6 +1,25 @@
 # Architecture
 
-## 1. System overview
+## Ownership (authoritative)
+
+```
+NitroApplication          # QML façade, settings, scenes UI models
+    └── NitroEngine       # sole media owner
+          ├── AudioDeviceManager + AudioEngine (WASAPI)
+          ├── AudioMixer
+          ├── Capture / Video (null → future WGC)
+          ├── Compositor + Preview/Program renderers
+          ├── TransitionEngine (Cut / Fade with progress)
+          └── FFmpegManager (stubs: encoder/recording/streaming/)
+```
+
+UI obtains `AudioEngine` only via `NitroApplication::audioEngine()` → `NitroEngine`.
+Never construct a second AudioEngine.
+
+Media interfaces use `MediaResult` / `MediaStatus` / `MediaCapabilities`
+(see `include/nitro/core/MediaResult.hpp`).
+
+## System overview
 
 ```
 ┌──────────────────────────── NitroBroadcast.exe ─────────────────────────────┐

@@ -6,13 +6,17 @@ Electron is **not** used. The old Electron project is a product reference only a
 
 ## Status
 
-Foundation phase:
+Architecture hardening pass (v0.1.1):
 
-- Native CMake + Qt 6 application shell
-- Fresh dark-first studio UI
-- Scene / source / mixer C++ models with QML bindings
-- Settings + logger
-- Media engine **interfaces** (null backends — no real capture/encode/stream yet)
+- **Single NitroEngine ownership** of AudioEngine / devices / mixer / FFmpeg stubs / compositor / transitions
+- Real **WASAPI** mic + desktop loopback (no duplicate AudioEngine)
+- SPSC **AudioRingBuffer**, stateful **AudioResampler**, data-driven process loop
+- Source factory + capability states, typed source configs
+- Resizable SplitView studio layout, vector **NitroIcon** (no emoji)
+- Metrics marked `metricsSimulated = true` until real counters exist
+- Windows GitHub Actions CI workflow
+
+Not yet: WGC frame capture, encode/stream, game capture, NDI/DeckLink.
 
 ## Requirements
 

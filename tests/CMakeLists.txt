@@ -6,6 +6,7 @@ add_executable(nitro_tests
     test_settings.cpp
     test_mixer.cpp
     test_wasapi_live.cpp
+    test_hardening.cpp
 )
 
 target_link_libraries(nitro_tests

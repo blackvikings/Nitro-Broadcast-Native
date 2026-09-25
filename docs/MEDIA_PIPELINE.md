@@ -1,5 +1,23 @@
 # Media pipeline strategies
 
+## Module boundaries (FFmpeg)
+
+| Directory | Role |
+|-----------|------|
+| `include/nitro/ffmpeg/` | FFmpegManager + module boundary stubs |
+| `encoder/` (future) | Encode sessions — no UI includes |
+| `recording/` (future) | File mux/recording |
+| `streaming/` (future) | RTMP/HLS etc. |
+
+Scene/UI modules must not include `libav*` headers. Prepare for:
+`libavformat`, `libavcodec`, `libavutil`, `libswscale`, `libswresample`.
+
+## Rendering boundary
+
+`IVideoFrame` / `ICompositor` / `PreviewRenderer` / `ProgramRenderer`
+live under `include/nitro/render/`. QML only displays composed surfaces;
+frame processing stays in C++.
+
 ## 10. FFmpeg integration strategy
 
 | Approach | Performance | Complexity | Stability | Debug | HW encode | Scale |

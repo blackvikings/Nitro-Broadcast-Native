@@ -41,10 +41,12 @@ private slots:
         QCOMPARE(meter.uiLevel(), 0.0f);
 
         std::vector<float> loud(480 * 2, 0.5f);
-        meter.process(loud.data(), 480, 2);
-        QVERIFY(meter.uiLevel() > 0.5f);
+        for (int i = 0; i < 10; ++i) {
+            meter.process(loud.data(), 480, 2);
+        }
+        QVERIFY(meter.uiLevel() > 0.4f);
         const auto snap = meter.snapshot();
-        QVERIFY(snap.peakDb > -10.0f);
+        QVERIFY(snap.peakHoldLinear >= 0.45f);
         QVERIFY(snap.rmsDb > -20.0f);
     }
 

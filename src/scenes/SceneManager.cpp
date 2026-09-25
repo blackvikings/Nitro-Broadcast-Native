@@ -1,6 +1,7 @@
 #include "nitro/scenes/SceneManager.hpp"
 
 #include "nitro/diagnostics/NitroLogger.hpp"
+#include "nitro/scenes/TransitionEngine.hpp"
 #include "nitro/sources/SourceFactory.hpp"
 
 #include <QFile>
@@ -16,6 +17,25 @@ SceneManager::SceneManager(QObject* parent)
     : QAbstractListModel(parent)
 {
     loadDefaults();
+}
+
+void SceneManager::setTransitionEngine(TransitionEngine* transitions)
+{
+    if (transitions_ == transitions) {
+        return;
+    }
+    if (transitions_) {
+        disconnect(transitions_, nullptr, this, nullptr);
+    }
+    transitions_ = transitions;
+    if (transitions_) {
+        connect(transitions_, &TransitionEngine::completed, this, &SceneManager::onTransitionCompleted);
+    }
+}
+
+void SceneManager::onTransitionCompleted(int toIndex)
+{
+    setProgramIndex(toIndex);
 }
 
 int SceneManager::rowCount(const QModelIndex& parent) const
@@ -189,13 +209,21 @@ bool SceneManager::selectPreview(int index)
 
 void SceneManager::cutToProgram()
 {
-    setProgramIndex(previewIndex_);
+    if (transitions_) {
+        transitions_->cut(programIndex_, previewIndex_);
+    } else {
+        setProgramIndex(previewIndex_);
+    }
     emit transitionPerformed(QStringLiteral("cut"));
 }
 
-void SceneManager::fadeToProgram()
+void SceneManager::fadeToProgram(int durationMs)
 {
-    setProgramIndex(previewIndex_);
+    if (transitions_) {
+        transitions_->fade(programIndex_, previewIndex_, durationMs);
+    } else {
+        setProgramIndex(previewIndex_);
+    }
     emit transitionPerformed(QStringLiteral("fade"));
 }
 

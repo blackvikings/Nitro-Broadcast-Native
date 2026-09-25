@@ -1,64 +1,80 @@
 #pragma once
 
+#include "nitro/core/MediaResult.hpp"
+
+#include <QVariantMap>
+
 namespace nitro {
+
+/// Empty config placeholder for modules that need no parameters yet.
+struct EmptyConfig {
+    QVariantMap toMap() const { return {}; }
+    static EmptyConfig fromMap(const QVariantMap&) { return {}; }
+};
 
 class ICaptureEngine {
 public:
     virtual ~ICaptureEngine() = default;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isRunning() const = 0;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
-class IAudioEngine {
+class IAudioEngineIface {
 public:
-    virtual ~IAudioEngine() = default;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isRunning() const = 0;
+    virtual ~IAudioEngineIface() = default;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 class IVideoEngine {
 public:
     virtual ~IVideoEngine() = default;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isRunning() const = 0;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 class IEncoder {
 public:
     virtual ~IEncoder() = default;
-    virtual bool open() = 0;
-    virtual void close() = 0;
-    virtual bool isOpen() const = 0;
+    virtual MediaResult open(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult close() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 class IRecorder {
 public:
     virtual ~IRecorder() = default;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isRunning() const = 0;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 class IStreamer {
 public:
     virtual ~IStreamer() = default;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isRunning() const = 0;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 class IDestination {
 public:
     virtual ~IDestination() = default;
-    virtual bool connect() = 0;
-    virtual void disconnect() = 0;
-    virtual bool start() = 0;
-    virtual void stop() = 0;
-    virtual bool isConnected() const = 0;
-    virtual bool isLive() const = 0;
+    virtual MediaResult connect(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult disconnect() = 0;
+    virtual MediaResult start(const EmptyConfig& config = {}) = 0;
+    virtual MediaResult stop() = 0;
+    virtual MediaStatus status() const = 0;
+    virtual MediaCapabilities capabilities() const = 0;
 };
 
 } // namespace nitro

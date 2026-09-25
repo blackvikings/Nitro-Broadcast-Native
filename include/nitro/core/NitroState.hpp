@@ -5,7 +5,7 @@
 
 namespace nitro {
 
-/// Runtime UI / session state separate from future media engine state.
+/// Runtime UI / session state separate from media engine state.
 class NitroState : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool streamingUiActive READ streamingUiActive NOTIFY streamingUiChanged)
@@ -18,6 +18,7 @@ class NitroState : public QObject {
     Q_PROPERTY(int bitrateKbps READ bitrateKbps NOTIFY metricsChanged)
     Q_PROPERTY(QString networkStatus READ networkStatus NOTIFY metricsChanged)
     Q_PROPERTY(QString encoderName READ encoderName NOTIFY metricsChanged)
+    Q_PROPERTY(bool metricsSimulated READ metricsSimulated NOTIFY metricsChanged)
     Q_PROPERTY(bool settingsOpen READ settingsOpen WRITE setSettingsOpen NOTIFY settingsOpenChanged)
 
 public:
@@ -34,6 +35,8 @@ public:
     int bitrateKbps() const { return bitrateKbps_; }
     QString networkStatus() const { return networkStatus_; }
     QString encoderName() const { return encoderName_; }
+    /// True until real performance counters are wired.
+    bool metricsSimulated() const { return metricsSimulated_; }
 
     bool settingsOpen() const { return settingsOpen_; }
     void setSettingsOpen(bool open);
@@ -53,6 +56,7 @@ private:
     bool streamingUiActive_ = false;
     bool recordingUiActive_ = false;
     bool settingsOpen_ = false;
+    bool metricsSimulated_ = true;
     double cpuUsage_ = 8.0;
     double gpuUsage_ = 12.0;
     int droppedFrames_ = 0;

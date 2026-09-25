@@ -45,20 +45,20 @@ Rectangle {
             font.family: "Consolas"
         }
         Text {
-            text: "CPU " + NitroState.cpuUsage.toFixed(0) + "%"
-            color: Theme.textSecondary
+            text: NitroState.metricsSimulated ? "CPU " + NitroState.cpuUsage.toFixed(0) + "% (sim)" : "CPU " + NitroState.cpuUsage.toFixed(0) + "%"
+            color: NitroState.metricsSimulated ? Theme.warning : Theme.textSecondary
             font.pixelSize: Theme.fontSm
             font.family: "Consolas"
         }
         Text {
-            text: "GPU " + NitroState.gpuUsage.toFixed(0) + "%"
-            color: Theme.textSecondary
+            text: NitroState.metricsSimulated ? "GPU " + NitroState.gpuUsage.toFixed(0) + "% (sim)" : "GPU " + NitroState.gpuUsage.toFixed(0) + "%"
+            color: NitroState.metricsSimulated ? Theme.warning : Theme.textSecondary
             font.pixelSize: Theme.fontSm
             font.family: "Consolas"
         }
         Text {
-            text: "Net " + NitroState.networkStatus
-            color: Theme.textSecondary
+            text: "Net " + NitroState.networkStatus + (NitroState.metricsSimulated ? " (sim)" : "")
+            color: NitroState.metricsSimulated ? Theme.warning : Theme.textSecondary
             font.pixelSize: Theme.fontSm
             font.family: "Consolas"
         }

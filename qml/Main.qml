@@ -21,51 +21,38 @@ ApplicationWindow {
         width: window.width
     }
 
-    Column {
+    SplitView {
         anchors.fill: parent
-        spacing: 0
+        orientation: Qt.Vertical
 
-        Row {
-            width: parent.width
-            height: parent.height - 180
+        SplitView {
+            SplitView.fillWidth: true
+            SplitView.fillHeight: true
+            SplitView.minimumHeight: 320
+            orientation: Qt.Horizontal
 
             ScenesPanel {
-                width: 240
-                height: parent.height
-            }
-
-            Rectangle {
-                width: 1
-                height: parent.height
-                color: Theme.borderSubtle
+                SplitView.preferredWidth: 240
+                SplitView.minimumWidth: 160
+                SplitView.maximumWidth: 420
             }
 
             PreviewProgram {
-                width: parent.width - 480
-                height: parent.height
-            }
-
-            Rectangle {
-                width: 1
-                height: parent.height
-                color: Theme.borderSubtle
+                SplitView.fillWidth: true
+                SplitView.minimumWidth: 400
             }
 
             SourcesPanel {
-                width: 240
-                height: parent.height
+                SplitView.preferredWidth: 260
+                SplitView.minimumWidth: 180
+                SplitView.maximumWidth: 480
             }
         }
 
-        Rectangle {
-            width: parent.width
-            height: 1
-            color: Theme.borderSubtle
-        }
-
         MixerPanel {
-            width: parent.width
-            height: 180
+            SplitView.preferredHeight: 180
+            SplitView.minimumHeight: 120
+            SplitView.maximumHeight: 320
         }
     }
 

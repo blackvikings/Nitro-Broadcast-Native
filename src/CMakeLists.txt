@@ -7,10 +7,12 @@ add_library(nitro_core STATIC
     diagnostics/NitroLogger.cpp
     scenes/Scene.cpp
     scenes/SceneManager.cpp
+    scenes/TransitionEngine.cpp
     sources/SourceType.cpp
     sources/SourceTransform.cpp
     sources/SourceBase.cpp
     sources/SourceFactory.cpp
+    sources/SourceConfigs.cpp
     sources/ConcreteSources.cpp
     sources/WinCaptureEnum.cpp
     sources/SourceListModel.cpp
@@ -18,6 +20,7 @@ add_library(nitro_core STATIC
     audio/AudioMixer.cpp
     audio/AudioClock.cpp
     audio/AudioRingBuffer.cpp
+    audio/AudioResampler.cpp
     audio/AudioMeter.cpp
     audio/AudioDeviceManager.cpp
     audio/WasapiCapture.cpp
@@ -27,6 +30,7 @@ add_library(nitro_core STATIC
     ${CMAKE_SOURCE_DIR}/include/nitro/core/NitroState.hpp
     ${CMAKE_SOURCE_DIR}/include/nitro/config/NitroSettings.hpp
     ${CMAKE_SOURCE_DIR}/include/nitro/scenes/SceneManager.hpp
+    ${CMAKE_SOURCE_DIR}/include/nitro/scenes/TransitionEngine.hpp
     ${CMAKE_SOURCE_DIR}/include/nitro/sources/SourceListModel.hpp
     ${CMAKE_SOURCE_DIR}/include/nitro/sources/SourceFactory.hpp
     ${CMAKE_SOURCE_DIR}/include/nitro/sources/SourcePropertiesController.hpp

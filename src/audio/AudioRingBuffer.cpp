@@ -17,22 +17,34 @@ void AudioRingBuffer::reset(std::size_t capacityFrames, int channels)
     data_.assign(capacityFrames_ * static_cast<std::size_t>(channels_), 0.0f);
     writePos_.store(0, std::memory_order_relaxed);
     readPos_.store(0, std::memory_order_relaxed);
+    resetCounters();
+}
+
+void AudioRingBuffer::resetCounters()
+{
+    overruns_.store(0, std::memory_order_relaxed);
+    underruns_.store(0, std::memory_order_relaxed);
 }
 
 std::size_t AudioRingBuffer::availableFrames() const
 {
     const auto w = writePos_.load(std::memory_order_acquire);
-    const auto r = readPos_.load(std::memory_order_relaxed);
-    return w - r;
+    const auto r = readPos_.load(std::memory_order_acquire);
+    return static_cast<std::size_t>(w - r);
 }
 
 std::size_t AudioRingBuffer::freeFrames() const
 {
-    return capacityFrames_ - availableFrames();
+    if (capacityFrames_ == 0) {
+        return 0;
+    }
+    const auto avail = availableFrames();
+    return avail >= capacityFrames_ ? 0 : (capacityFrames_ - avail);
 }
 
 void AudioRingBuffer::clear()
 {
+    // Only safe when producer+consumer are stopped.
     writePos_.store(0, std::memory_order_relaxed);
     readPos_.store(0, std::memory_order_relaxed);
 }
@@ -42,11 +54,19 @@ std::size_t AudioRingBuffer::write(const float* interleaved, std::size_t frames)
     if (!interleaved || frames == 0 || capacityFrames_ == 0) {
         return 0;
     }
+
     const std::size_t free = freeFrames();
-    const std::size_t toWrite = std::min(frames, free);
+    std::size_t toWrite = std::min(frames, free);
+    if (toWrite < frames) {
+        overruns_.fetch_add(frames - toWrite, std::memory_order_relaxed);
+    }
+    if (toWrite == 0) {
+        return 0;
+    }
+
     auto w = writePos_.load(std::memory_order_relaxed);
     for (std::size_t i = 0; i < toWrite; ++i) {
-        const std::size_t idx = (w + i) % capacityFrames_;
+        const std::size_t idx = static_cast<std::size_t>(w + i) % capacityFrames_;
         std::memcpy(
             data_.data() + idx * static_cast<std::size_t>(channels_),
             interleaved + i * static_cast<std::size_t>(channels_),
@@ -58,16 +78,7 @@ std::size_t AudioRingBuffer::write(const float* interleaved, std::size_t frames)
 
 std::size_t AudioRingBuffer::writeOverwrite(const float* interleaved, std::size_t frames)
 {
-    if (!interleaved || frames == 0 || capacityFrames_ == 0) {
-        return 0;
-    }
-    // If not enough space, advance read pointer (drop oldest).
-    const std::size_t free = freeFrames();
-    if (frames > free) {
-        const std::size_t drop = frames - free;
-        auto r = readPos_.load(std::memory_order_relaxed);
-        readPos_.store(r + drop, std::memory_order_release);
-    }
+    // Deprecated path: drop NEW samples instead of stealing readPos (SPSC-safe).
     return write(interleaved, frames);
 }
 
@@ -76,11 +87,19 @@ std::size_t AudioRingBuffer::read(float* interleavedOut, std::size_t frames)
     if (!interleavedOut || frames == 0 || capacityFrames_ == 0) {
         return 0;
     }
+
     const std::size_t avail = availableFrames();
     const std::size_t toRead = std::min(frames, avail);
+    if (toRead < frames) {
+        underruns_.fetch_add(frames - toRead, std::memory_order_relaxed);
+    }
+    if (toRead == 0) {
+        return 0;
+    }
+
     auto r = readPos_.load(std::memory_order_relaxed);
     for (std::size_t i = 0; i < toRead; ++i) {
-        const std::size_t idx = (r + i) % capacityFrames_;
+        const std::size_t idx = static_cast<std::size_t>(r + i) % capacityFrames_;
         std::memcpy(
             interleavedOut + i * static_cast<std::size_t>(channels_),
             data_.data() + idx * static_cast<std::size_t>(channels_),

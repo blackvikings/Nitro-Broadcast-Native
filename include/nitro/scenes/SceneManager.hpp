@@ -8,6 +8,8 @@
 
 namespace nitro {
 
+class TransitionEngine;
+
 class SceneManager : public QAbstractListModel {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY scenesChanged)
@@ -26,6 +28,8 @@ public:
     };
 
     explicit SceneManager(QObject* parent = nullptr);
+
+    void setTransitionEngine(TransitionEngine* transitions);
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -46,7 +50,7 @@ public:
     Q_INVOKABLE QString duplicateScene(int index);
     Q_INVOKABLE bool selectPreview(int index);
     Q_INVOKABLE void cutToProgram();
-    Q_INVOKABLE void fadeToProgram();
+    Q_INVOKABLE void fadeToProgram(int durationMs = 300);
 
     Q_INVOKABLE int sourceCount() const;
     Q_INVOKABLE QVariantMap sourceAt(int index) const;
@@ -91,11 +95,13 @@ private:
     void ensureValidIndices();
     double canvasWidth() const { return 1920.0; }
     double canvasHeight() const { return 1080.0; }
+    void onTransitionCompleted(int toIndex);
 
     QVector<Scene> scenes_;
     int previewIndex_ = 0;
     int programIndex_ = 0;
     int selectedSourceIndex_ = -1;
+    TransitionEngine* transitions_ = nullptr;
 };
 
 } // namespace nitro

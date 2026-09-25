@@ -11,17 +11,45 @@ void AudioMeter::process(const float* interleaved, std::size_t frames, int chann
     }
 
     float peak = 0.0f;
+    float peakL = 0.0f;
+    float peakR = 0.0f;
     double sumSq = 0.0;
+    bool clip = false;
     const std::size_t total = frames * static_cast<std::size_t>(channels);
     for (std::size_t i = 0; i < total; ++i) {
-        const float a = std::abs(interleaved[i]);
+        const float s = interleaved[i];
+        const float a = std::abs(s);
         peak = std::max(peak, a);
+        if (a >= clipThreshold_) {
+            clip = true;
+        }
         sumSq += static_cast<double>(a) * static_cast<double>(a);
+        if (channels >= 2) {
+            if ((i % static_cast<std::size_t>(channels)) == 0) {
+                peakL = std::max(peakL, a);
+            } else if ((i % static_cast<std::size_t>(channels)) == 1) {
+                peakR = std::max(peakR, a);
+            }
+        } else {
+            peakL = peakR = peak;
+        }
     }
     const float rms = static_cast<float>(std::sqrt(sumSq / static_cast<double>(total)));
 
-    peak_.store(peak, std::memory_order_relaxed);
+    // Stable envelope
+    if (peak > envPeak_) {
+        envPeak_ += (peak - envPeak_) * attack_;
+    } else {
+        envPeak_ += (peak - envPeak_) * release_;
+    }
+
+    peak_.store(envPeak_, std::memory_order_relaxed);
     rms_.store(rms, std::memory_order_relaxed);
+    peakL_.store(peakL, std::memory_order_relaxed);
+    peakR_.store(peakR, std::memory_order_relaxed);
+    if (clip) {
+        clipped_.store(true, std::memory_order_relaxed);
+    }
 
     float hold = peakHold_.load(std::memory_order_relaxed);
     if (peak >= hold) {
@@ -30,7 +58,6 @@ void AudioMeter::process(const float* interleaved, std::size_t frames, int chann
     } else {
         holdTimerFrames_ -= static_cast<float>(frames);
         if (holdTimerFrames_ <= 0.0f) {
-            // Decay hold toward current peak
             hold = std::max(peak, hold * 0.92f);
         }
     }
@@ -42,7 +69,11 @@ void AudioMeter::reset()
     peak_.store(0.0f, std::memory_order_relaxed);
     rms_.store(0.0f, std::memory_order_relaxed);
     peakHold_.store(0.0f, std::memory_order_relaxed);
+    peakL_.store(0.0f, std::memory_order_relaxed);
+    peakR_.store(0.0f, std::memory_order_relaxed);
+    clipped_.store(false, std::memory_order_relaxed);
     holdTimerFrames_ = 0.0f;
+    envPeak_ = 0.0f;
 }
 
 MeterLevels AudioMeter::snapshot() const
@@ -51,6 +82,9 @@ MeterLevels AudioMeter::snapshot() const
     m.peakLinear = peak_.load(std::memory_order_relaxed);
     m.rmsLinear = rms_.load(std::memory_order_relaxed);
     m.peakHoldLinear = peakHold_.load(std::memory_order_relaxed);
+    m.peakLeft = peakL_.load(std::memory_order_relaxed);
+    m.peakRight = peakR_.load(std::memory_order_relaxed);
+    m.clipped = clipped_.load(std::memory_order_relaxed);
     m.peakDb = linearToDb(m.peakLinear);
     m.rmsDb = linearToDb(m.rmsLinear);
     m.peakHoldDb = linearToDb(m.peakHoldLinear);
@@ -60,7 +94,6 @@ MeterLevels AudioMeter::snapshot() const
 float AudioMeter::uiLevel() const
 {
     const float db = linearToDb(peak_.load(std::memory_order_relaxed));
-    // Map -60..0 dBFS → 0..1
     const float norm = (db + 60.0f) / 60.0f;
     return std::clamp(norm, 0.0f, 1.0f);
 }

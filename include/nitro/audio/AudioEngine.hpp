@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <array>
 #include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -21,16 +22,22 @@ namespace nitro {
 
 class AudioMixer;
 
+enum class AudioDeviceConnectionState {
+    Connected,
+    Disconnected,
+    Reconnecting
+};
+
 /**
- * Signal chain (documented):
+ * Signal chain:
+ *   Capture → RingBuffer → [Process Thread, data-driven]
+ *     → Gain → Channel Meter (post-gain, pre-mute) → Mute → Sum
+ *     → Master Gain → Master Meter (clip detect, no hard clip)
+ *     → IAudioOutput sinks
  *
- *   Capture → RingBuffer → [Process Thread]
- *     → Gain (-60..+12 dB)
- *     → Channel Meter (post-gain, pre-mute)  ← UI meters
- *     → Mute (silence into mix; meter still shows pre-mute)
- *     → Sum into Master Bus
- *     → Master Gain → Master Mute → Master Meter
- *     → IAudioOutput sinks (monitor / future record / stream)
+ * Scheduling: process thread waits on condition_variable woken by capture
+ * data callbacks, with a short timeout for bounded latency / silence blocks.
+ * Documented in docs/AUDIO_ENGINE.md.
  */
 class AudioEngine : public QObject {
     Q_OBJECT
@@ -39,9 +46,12 @@ class AudioEngine : public QObject {
     Q_PROPERTY(bool masterMuted READ masterMuted WRITE setMasterMuted NOTIFY masterChanged)
     Q_PROPERTY(double masterLevel READ masterLevel NOTIFY metersUpdated)
     Q_PROPERTY(double masterPeakDb READ masterPeakDb NOTIFY metersUpdated)
+    Q_PROPERTY(bool masterClipped READ masterClipped NOTIFY metersUpdated)
     Q_PROPERTY(QString micDeviceId READ micDeviceId WRITE setMicDeviceId NOTIFY devicesBoundChanged)
     Q_PROPERTY(QString desktopDeviceId READ desktopDeviceId WRITE setDesktopDeviceId NOTIFY devicesBoundChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusChanged)
+    Q_PROPERTY(QString micConnectionState READ micConnectionState NOTIFY connectionStateChanged)
+    Q_PROPERTY(QString desktopConnectionState READ desktopConnectionState NOTIFY connectionStateChanged)
 
 public:
     explicit AudioEngine(AudioDeviceManager* devices, QObject* parent = nullptr);
@@ -67,8 +77,11 @@ public:
 
     double masterLevel() const { return masterUiLevel_; }
     double masterPeakDb() const { return masterPeakDb_; }
+    bool masterClipped() const { return masterClipped_; }
 
     QString statusText() const { return statusText_; }
+    QString micConnectionState() const;
+    QString desktopConnectionState() const;
 
     void attachMixer(AudioMixer* mixer);
 
@@ -80,6 +93,7 @@ public:
     float channelUiLevel(const QString& channelId) const;
 
     Q_INVOKABLE void refreshAndRestart();
+    Q_INVOKABLE void clearMasterClip();
 
 signals:
     void runningChanged();
@@ -87,7 +101,9 @@ signals:
     void masterChanged();
     void devicesBoundChanged();
     void statusChanged();
+    void connectionStateChanged();
     void errorOccurred(const QString& message);
+    void clipDetected();
 
 private:
     struct ChannelState {
@@ -100,15 +116,18 @@ private:
         std::atomic<bool> monitoring{false};
         AudioMeter meter;
         std::vector<float> scratch;
+        AudioDeviceConnectionState connection = AudioDeviceConnectionState::Disconnected;
     };
 
     void processLoop();
+    void notifyDataReady();
     void publishMeters();
     void setStatus(const QString& text);
     ChannelState* findChannel(const QString& id);
     const ChannelState* findChannel(const QString& id) const;
     bool startCaptures();
     void stopCaptures();
+    void onDevicesChanged();
 
     AudioDeviceManager* devices_ = nullptr;
     AudioMixer* mixer_ = nullptr;
@@ -128,10 +147,14 @@ private:
     std::atomic<bool> running_{false};
     std::atomic<bool> stopProcess_{false};
     std::thread processThread_;
+    std::mutex wakeMutex_;
+    std::condition_variable wakeCv_;
+    std::atomic<bool> dataPending_{false};
 
     QTimer uiMeterTimer_;
     float masterUiLevel_ = 0.0f;
     float masterPeakDb_ = -120.0f;
+    bool masterClipped_ = false;
     QString statusText_ = QStringLiteral("Audio stopped");
 
     mutable std::mutex channelMutex_;

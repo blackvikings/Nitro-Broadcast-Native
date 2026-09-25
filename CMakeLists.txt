@@ -38,6 +38,7 @@ set(NITRO_QML_FILES
     qml/Theme/Theme.qml
     qml/components/NitroButton.qml
     qml/components/NitroIconButton.qml
+    qml/components/NitroIcon.qml
     qml/components/NitroPanel.qml
     qml/components/NitroMeter.qml
     qml/components/NitroStatusBadge.qml
@@ -58,6 +59,7 @@ set_source_files_properties(qml/Theme/Theme.qml
     PROPERTIES QT_RESOURCE_ALIAS "Theme/Theme.qml" QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/NitroButton.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroButton.qml")
 set_source_files_properties(qml/components/NitroIconButton.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroIconButton.qml")
+set_source_files_properties(qml/components/NitroIcon.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroIcon.qml")
 set_source_files_properties(qml/components/NitroPanel.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroPanel.qml")
 set_source_files_properties(qml/components/NitroMeter.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroMeter.qml")
 set_source_files_properties(qml/components/NitroStatusBadge.qml PROPERTIES QT_RESOURCE_ALIAS "components/NitroStatusBadge.qml")

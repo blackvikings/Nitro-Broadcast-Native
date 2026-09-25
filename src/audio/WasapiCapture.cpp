@@ -109,34 +109,6 @@ void convertToFloatStereo(
     }
 }
 
-void resampleLinearStereo(
-    const std::vector<float>& in,
-    int inRate,
-    std::vector<float>& out,
-    int outRate)
-{
-    if (inRate <= 0 || outRate <= 0 || in.empty()) {
-        out.clear();
-        return;
-    }
-    if (inRate == outRate) {
-        out = in;
-        return;
-    }
-    const std::size_t inFrames = in.size() / 2;
-    const auto outFrames = static_cast<std::size_t>(
-        (std::max)(std::int64_t{1}, (static_cast<std::int64_t>(inFrames) * outRate) / inRate));
-    out.resize(outFrames * 2);
-    for (std::size_t i = 0; i < outFrames; ++i) {
-        const double srcPos = static_cast<double>(i) * static_cast<double>(inRate) / static_cast<double>(outRate);
-        const std::size_t i0 = static_cast<std::size_t>(srcPos);
-        const std::size_t i1 = std::min(i0 + 1, inFrames > 0 ? inFrames - 1 : 0);
-        const float t = static_cast<float>(srcPos - static_cast<double>(i0));
-        out[i * 2] = in[i0 * 2] * (1.0f - t) + in[i1 * 2] * t;
-        out[i * 2 + 1] = in[i0 * 2 + 1] * (1.0f - t) + in[i1 * 2 + 1] * t;
-    }
-}
-
 #endif
 
 } // namespace
@@ -145,6 +117,7 @@ WasapiCapture::WasapiCapture()
 {
     ring_.reset(kRingFrames, kEngineChannels);
     meter_.setSampleRate(kEngineRate);
+    resampler_.configure(kEngineRate, kEngineRate, kEngineChannels);
 }
 
 WasapiCapture::~WasapiCapture()
@@ -164,7 +137,9 @@ bool WasapiCapture::start(const QString& deviceId, WasapiCaptureMode mode, Audio
     clock_ = clock;
     stopRequested_.store(false, std::memory_order_release);
     ring_.clear();
+    ring_.resetCounters();
     meter_.reset();
+    resampler_.reset();
     framesCaptured_.store(0, std::memory_order_relaxed);
     {
         std::lock_guard lock(errorMutex_);
@@ -285,6 +260,7 @@ void WasapiCapture::threadMain(QString deviceId, WasapiCaptureMode mode)
 
     const int srcRate = static_cast<int>(mixFormat->nSamplesPerSec);
     meter_.setSampleRate(kEngineRate);
+    resampler_.configure(srcRate, kEngineRate, kEngineChannels);
 
     hr = audioClient->Start();
     if (FAILED(hr)) {
@@ -334,13 +310,15 @@ void WasapiCapture::threadMain(QString deviceId, WasapiCaptureMode mode)
                 } else {
                     convertToFloatStereo(data, numFrames, mixFormat, converted);
                 }
-                resampleLinearStereo(converted, srcRate, resampled, kEngineRate);
+                resampler_.process(converted.data(), converted.size() / 2, resampled);
                 if (!resampled.empty()) {
                     const std::size_t frames = resampled.size() / 2;
-                    // Meter on engine-format signal (actual audio amplitude)
                     meter_.process(resampled.data(), frames, kEngineChannels);
-                    ring_.writeOverwrite(resampled.data(), frames);
+                    ring_.write(resampled.data(), frames);
                     framesCaptured_.fetch_add(static_cast<std::int64_t>(frames), std::memory_order_relaxed);
+                    if (dataReady_) {
+                        dataReady_();
+                    }
                 }
             }
 

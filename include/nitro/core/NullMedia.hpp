@@ -2,76 +2,113 @@
 
 #include "nitro/core/MediaInterfaces.hpp"
 
-#include <memory>
-
 namespace nitro {
 
-/// Null / stub implementations — media path not implemented yet.
 class NullCaptureEngine final : public ICaptureEngine {
 public:
-    bool start() override { return false; }
-    void stop() override { running_ = false; }
-    bool isRunning() const override { return running_; }
+    MediaResult start(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::Unsupported,
+                                 QStringLiteral("Capture engine not implemented"));
+    }
+    MediaResult stop() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Null capture")};
+    }
 private:
-    bool running_ = false;
-};
-
-class NullAudioEngine final : public IAudioEngine {
-public:
-    bool start() override { return false; }
-    void stop() override { running_ = false; }
-    bool isRunning() const override { return running_; }
-private:
-    bool running_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 class NullVideoEngine final : public IVideoEngine {
 public:
-    bool start() override { return false; }
-    void stop() override { running_ = false; }
-    bool isRunning() const override { return running_; }
+    MediaResult start(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::Unsupported,
+                                 QStringLiteral("Video engine not implemented"));
+    }
+    MediaResult stop() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Null video")};
+    }
 private:
-    bool running_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 class NullEncoder final : public IEncoder {
 public:
-    bool open() override { return false; }
-    void close() override { open_ = false; }
-    bool isOpen() const override { return open_; }
+    MediaResult open(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::DependencyMissing,
+                                 QStringLiteral("FFmpeg encoder not linked"));
+    }
+    MediaResult close() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Encoder stub")};
+    }
 private:
-    bool open_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 class NullRecorder final : public IRecorder {
 public:
-    bool start() override { return false; }
-    void stop() override { running_ = false; }
-    bool isRunning() const override { return running_; }
+    MediaResult start(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::Unsupported,
+                                 QStringLiteral("Recorder not implemented"));
+    }
+    MediaResult stop() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Recorder stub")};
+    }
 private:
-    bool running_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 class NullStreamer final : public IStreamer {
 public:
-    bool start() override { return false; }
-    void stop() override { running_ = false; }
-    bool isRunning() const override { return running_; }
+    MediaResult start(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::Unsupported,
+                                 QStringLiteral("Streamer not implemented"));
+    }
+    MediaResult stop() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Streamer stub")};
+    }
 private:
-    bool running_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 class NullDestination final : public IDestination {
 public:
-    bool connect() override { return false; }
-    void disconnect() override { connected_ = false; live_ = false; }
-    bool start() override { return false; }
-    void stop() override { live_ = false; }
-    bool isConnected() const override { return connected_; }
-    bool isLive() const override { return live_; }
+    MediaResult connect(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::Unsupported,
+                                 QStringLiteral("Destination not implemented"));
+    }
+    MediaResult disconnect() override { status_ = MediaStatus::Idle; return MediaResult::success(); }
+    MediaResult start(const EmptyConfig&) override
+    {
+        return MediaResult::fail(MediaErrorCode::NotRunning, QStringLiteral("Not connected"));
+    }
+    MediaResult stop() override { return MediaResult::success(); }
+    MediaStatus status() const override { return status_; }
+    MediaCapabilities capabilities() const override
+    {
+        return {false, false, false, true, QStringLiteral("Destination stub")};
+    }
 private:
-    bool connected_ = false;
-    bool live_ = false;
+    MediaStatus status_ = MediaStatus::Unavailable;
 };
 
 } // namespace nitro

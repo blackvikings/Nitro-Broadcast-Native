@@ -1,5 +1,28 @@
 # Features checklist and first tasks
 
+## Completed (architecture hardening)
+
+- [x] Unify NitroEngine ownership (single AudioEngine)
+- [x] MediaResult / Status / Capabilities interfaces
+- [x] SPSC AudioRingBuffer + AudioResampler + data-driven scheduler
+- [x] WASAPI device hotplug (IMMNotificationClient)
+- [x] Meter clip detect; remove master hard clip
+- [x] Typed source configs + capability UI
+- [x] TransitionEngine (Cut / Fade progress)
+- [x] Render interface stubs
+- [x] SplitView layout + NitroIcon
+- [x] Simulated metrics flag
+- [x] Windows CI workflow
+
+## Next (do not mix into hardening commits)
+
+- [ ] WGC Display Capture frame session
+- [ ] Window Capture frames
+- [ ] Camera (Media Foundation)
+- [ ] Compositor draw of Image/Text/Color
+- [ ] FFmpeg link + swresample backend
+- [ ] Real recording / streaming
+
 ## 15. Migration / features checklist (old → native)
 
 | Feature | Electron | Native target | Priority |

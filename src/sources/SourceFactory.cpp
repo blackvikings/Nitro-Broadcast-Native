@@ -122,11 +122,11 @@ QVector<SourceCatalogEntry> SourceFactory::catalog()
     };
 
     const char* icons[] = {
-        "🖥", "🪟", "🎮", "📱", "📷", "🎞", "▶", "🌐",
-        "🎙", "🔊", "🎧",
-        "🖼", "🗂", "🎨", "✍", "✨",
-        "🎬", "📁",
-        "📡", "🎥", "🔌"
+        "display", "window", "game", "application", "camera", "media", "vlc", "browser",
+        "mic", "speaker", "app_audio",
+        "image", "slideshow", "color", "text", "animated",
+        "scene", "group",
+        "ndi", "decklink", "plugin"
     };
 
     QVector<SourceCatalogEntry> entries;
@@ -171,12 +171,8 @@ QVariant SourceCatalogModel::data(const QModelIndex& index, int role) const
     case CapabilityLabelRole: return sourceCapabilityToString(e.capability);
     case NoteRole: return e.note;
     case CanAddRole:
-        // Allow adding Experimental & Available. NotImplemented/NotAvailable still addable
-        // as design placeholders but UI marks them disabled by default.
         return e.capability == SourceCapability::Available
-            || e.capability == SourceCapability::Experimental
-            || e.capability == SourceCapability::NotImplemented
-            || e.capability == SourceCapability::NotAvailable;
+            || e.capability == SourceCapability::Experimental;
     default:
         return {};
     }
