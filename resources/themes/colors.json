@@ -1,0 +1,10 @@
+{
+  "dark": {
+    "bgApp": "#0E0F12",
+    "bgPanel": "#16181D",
+    "bgElevated": "#1C1F26",
+    "accent": "#5B8CFF",
+    "preview": "#2DD4BF",
+    "program": "#F07178"
+  }
+}

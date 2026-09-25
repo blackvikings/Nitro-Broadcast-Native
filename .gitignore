@@ -1,0 +1,14 @@
+# Keep build artifacts and IDE noise out of VCS
+/build/
+/out/
+/.vs/
+/.idea/
+CMakeUserPresets.json
+*.user
+*.autosave
+*.qmlc
+*.jsc
+
+# Local Qt / vcpkg
+/vcpkg_installed/
+/.vcpkg-root
